@@ -7,12 +7,12 @@ package com.lokesh.android.mychatapp;
 public class Message {
     private String from;
     private String text;
-    private String createdAt;
+    private int i;
 
-    Message( String from, String text, String createdAt){
-        this.createdAt = createdAt;
-        this.from = from;
+    Message( String from, String text, String createdAt, int i){
+        this.i = i;
         this.text = text;
+        this.from = from;
     }
 
     public String getFrom(){
@@ -23,7 +23,7 @@ public class Message {
         return text;
     }
 
-    public String getCreatedAt(){
-        return createdAt;
+    public int getMessageFormat(){
+        return i;
     }
 }

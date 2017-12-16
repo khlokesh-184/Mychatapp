@@ -1,7 +1,14 @@
 package com.lokesh.android.mychatapp;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -36,11 +43,13 @@ public class ChatActivity extends Activity {
     private ImageButton sendButton;
     private String messageString;
     private Socket mSocket;
-    private ListView list ;
+    private ListView list;
     private ListView peopleListView;
     boolean joinSuccessful;
     private MessageAdapter itemsAdapter;
     private ArrayAdapter<String> peopleAdapter;
+    private double longitude;
+    private double latitude;
 
     private boolean sentSuccessful;
     private ArrayList<String> peopleList = new ArrayList<String>();
@@ -55,10 +64,7 @@ public class ChatActivity extends Activity {
         list = (ListView) findViewById(R.id.message_list);
         peopleListView = (ListView) findViewById(R.id.people_list);
 
-        message= (EditText) findViewById(R.id.message);
-        //messageString = message.getText().toString();
-
-        //mSocket = new MainActivity().getSocket();
+        message = (EditText) findViewById(R.id.message);
 
         try {
             mSocket = IO.socket("https://chat-app-by-me.herokuapp.com/");
@@ -99,13 +105,15 @@ public class ChatActivity extends Activity {
         sendButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view) {
-                Log.i("mnb", "2");
+                //Log.i("mnb", "2");
                 attemptMessageSending();
+                message.setText("");
             }
         });
 
         mSocket.on("newMessage", onNewMessage);
         mSocket.on("updateUsersList", onPeopleList);
+        mSocket.on("newLocationMessage", onLocationMessage);
 
         itemsAdapter = new MessageAdapter(this, message_list);
         itemsAdapter.notifyDataSetChanged();
@@ -174,7 +182,7 @@ public class ChatActivity extends Activity {
                     try {
                         from = data.getString("from");
                         text = data.getString("text");
-                        m=new Message(from,text,data.getString("createdAt"));
+                        m=new Message(from,text,data.getString("createdAt"),1);
                         message_list.add(m);
                     } catch (JSONException e) {
                         return;
@@ -204,6 +212,34 @@ public class ChatActivity extends Activity {
                     peopleAdapter.notifyDataSetChanged();
 
                     //Log.i("mn", "123"+args[0]);
+                }
+            });
+        }
+    };
+
+    private Emitter.Listener onLocationMessage = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+
+            ChatActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+
+                    Log.i("klj", "123"+args[0]);
+                    JSONObject data = (JSONObject) args[0];
+                    String from;
+                    String murl;
+
+                    Message m;
+                    try {
+                        from = data.getString("from");
+                        murl = data.getString("url");
+                        m=new Message(from,murl,data.getString("createdAt"),0);
+                        message_list.add(m);
+                    } catch (JSONException e) {
+                        return;
+                    }
+                    itemsAdapter.notifyDataSetChanged();
                 }
             });
         }
